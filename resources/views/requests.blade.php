@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ASIN — Suivi des demandes d'actes</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @routes
 </head>
 <body>
     <div id="app"></div>

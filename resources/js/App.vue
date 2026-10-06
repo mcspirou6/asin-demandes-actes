@@ -65,7 +65,7 @@
         </main>
 
         <footer class="footer">
-            <p>Suivi des demandes d'actes administratifs — démonstration technique</p>
+            <p>ASIN — Suivi des demandes d'actes administratifs</p>
         </footer>
     </div>
 </template>

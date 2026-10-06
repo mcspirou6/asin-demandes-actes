@@ -121,7 +121,15 @@ body {
 
 /* Structure générale */
 
+.page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
 .main {
+    width: 100%;
+    flex: 1;
     max-width: 960px;
     margin: 0 auto;
     padding: 1.5rem 1rem 2.5rem;
@@ -137,6 +145,10 @@ body {
     text-align: center;
     color: var(--color-muted);
     font-size: 0.8rem;
+}
+
+.footer p {
+    margin: 0;
 }
 
 /* Statistiques */
