@@ -10,6 +10,9 @@ return new class extends Migration
     {
         Schema::create('requests', function (Blueprint $table) {
             $table->id();
+            // Code de suivi remis à l'usager après le dépôt : il lui permet
+            // de retrouver sa demande sans expose son NPI. Unique en base.
+            $table->string('tracking_code', 16)->unique();
             // Le NPI est stocké en string pour préserver les zéros initiaux
             // (ex: "0123456789" ne doit jamais devenir 123456789).
             $table->string('npi', 10);

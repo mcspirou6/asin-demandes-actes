@@ -15,6 +15,7 @@ class RequestResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'tracking_code' => $this->tracking_code,
             'npi' => $this->npi,
             'act_type' => $this->act_type->value,
             'act_type_label' => $this->act_type->label(),

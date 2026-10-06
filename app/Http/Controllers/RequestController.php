@@ -10,6 +10,8 @@ use App\Models\Request;
 use App\Services\RequestStatusService;
 use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
 
 /**
@@ -31,12 +33,47 @@ class RequestController extends Controller
      */
     public function store(StoreRequestRequest $httpRequest): \Illuminate\Http\JsonResponse
     {
+        // Le code de suivi est généré par le SERVEUR et remis à l'usager :
+        // il lui permettra de suivre sa demande sans connaître le NPI.
         $request = Request::create([
             ...$httpRequest->validated(),
+            'tracking_code' => $this->generateTrackingCode(),
             'status' => RequestStatus::Submitted,
         ]);
 
         return RequestResource::make($request)->response()->setStatusCode(201);
+    }
+
+    /**
+     * Génère un code de suivi unique au format ASIN-XXXXXX.
+     * La boucle couvre l'improbable collision (36^6 combinaisons).
+     */
+    private function generateTrackingCode(): string
+    {
+        do {
+            $code = 'ASIN-' . Str::upper(Str::random(6));
+        } while (Request::query()->where('tracking_code', $code)->exists());
+
+        return $code;
+    }
+
+    /**
+     * Suivre une demande à partir de son code de suivi (public).
+     * Sert l'écran "Suivre ma demande" de l'espace usager.
+     */
+    public function track(string $code): RequestResource
+    {
+        $request = Request::query()
+            ->where('tracking_code', strtoupper(trim($code)))
+            ->first();
+
+        abort_unless(
+            $request !== null,
+            404,
+            'Aucune demande ne correspond à ce code de suivi.'
+        );
+
+        return new RequestResource($request);
     }
 
     /**

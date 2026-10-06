@@ -16,6 +16,15 @@ class RequestApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Simule une session agent connectée : les endpoints de traitement
+     * (PATCH statut) sont réservés à l'agent.
+     */
+    protected function asAdmin(): static
+    {
+        return $this->withSession(['admin_authenticated' => true]);
+    }
+
     // ------------------------------------------------------------------
     // Création
     // ------------------------------------------------------------------
@@ -33,11 +42,30 @@ class RequestApiTest extends TestCase
             ->assertJsonPath('data.status', 'submitted')
             ->assertJsonPath('data.copies_count', 2);
 
+        // Un code de suivi est remis à l'usager (format ASIN-XXXXXX).
+        $this->assertMatchesRegularExpression(
+            '/^ASIN-[A-Z0-9]{6}$/',
+            $response->json('data.tracking_code')
+        );
+
         // Vérifie que le statut initial est bien forcé par le serveur.
         $this->assertDatabaseHas('requests', [
             'npi' => '0123456789',
             'status' => 'submitted',
         ]);
+    }
+
+    public function test_le_code_de_suivi_est_unique(): void
+    {
+        $this->postJson('/api/requests', [
+            'npi' => '1234567890', 'act_type' => 'birth_certificate', 'copies_count' => 1,
+        ]);
+        $this->postJson('/api/requests', [
+            'npi' => '1234567890', 'act_type' => 'birth_certificate', 'copies_count' => 1,
+        ]);
+
+        $codes = Request::query()->pluck('tracking_code');
+        $this->assertSame($codes->count(), $codes->unique()->count());
     }
 
     public function test_le_client_ne_peut_pas_imposer_le_statut_initial(): void
@@ -163,6 +191,26 @@ class RequestApiTest extends TestCase
     }
 
     // ------------------------------------------------------------------
+    // Suivi par code de suivi (espace usager)
+    // ------------------------------------------------------------------
+
+    public function test_suivi_par_code_de_suivi(): void
+    {
+        $request = Request::factory()->create();
+
+        $this->getJson("/api/requests/track/{$request->tracking_code}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.id', $request->id)
+            ->assertJsonPath('data.tracking_code', $request->tracking_code);
+    }
+
+    public function test_suivi_code_inconnu_renvoie_404(): void
+    {
+        $this->getJson('/api/requests/track/ASIN-ZZZZZZ')
+            ->assertStatus(404);
+    }
+
+    // ------------------------------------------------------------------
     // Cycle de vie
     // ------------------------------------------------------------------
 
@@ -170,7 +218,7 @@ class RequestApiTest extends TestCase
     {
         $request = Request::factory()->create();
 
-        $this->patchJson("/api/requests/{$request->id}/status", ['status' => 'processing'])
+        $this->asAdmin()->patchJson("/api/requests/{$request->id}/status", ['status' => 'processing'])
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'processing');
     }
@@ -179,7 +227,7 @@ class RequestApiTest extends TestCase
     {
         $request = Request::factory()->status(RequestStatus::Processing)->create();
 
-        $this->patchJson("/api/requests/{$request->id}/status", ['status' => 'approved'])
+        $this->asAdmin()->patchJson("/api/requests/{$request->id}/status", ['status' => 'approved'])
             ->assertStatus(200)
             ->assertJsonPath('data.status', 'approved');
     }
@@ -188,7 +236,7 @@ class RequestApiTest extends TestCase
     {
         $request = Request::factory()->status(RequestStatus::Processing)->create();
 
-        $response = $this->patchJson("/api/requests/{$request->id}/status", [
+        $response = $this->asAdmin()->patchJson("/api/requests/{$request->id}/status", [
             'status' => 'rejected',
             'rejection_reason' => 'Informations incorrectes.',
         ]);
@@ -218,13 +266,23 @@ class RequestApiTest extends TestCase
     {
         $request = Request::factory()->status($from)->create();
 
-        $response = $this->patchJson("/api/requests/{$request->id}/status", ['status' => $to]);
+        $response = $this->asAdmin()->patchJson("/api/requests/{$request->id}/status", ['status' => $to]);
 
         $response->assertStatus(409)
             ->assertJsonStructure(['message']);
 
         // La demande ne doit pas avoir été modifiée.
         $this->assertSame($from->value, $request->fresh()->status->value);
+    }
+
+    public function test_transition_sans_agent_connecte_refusee_401(): void
+    {
+        $request = Request::factory()->create();
+
+        $this->patchJson("/api/requests/{$request->id}/status", ['status' => 'processing'])
+            ->assertStatus(401);
+
+        $this->assertSame('submitted', $request->fresh()->status->value);
     }
 
     // ------------------------------------------------------------------
@@ -235,7 +293,7 @@ class RequestApiTest extends TestCase
     {
         $request = Request::factory()->status(RequestStatus::Processing)->create();
 
-        $this->patchJson("/api/requests/{$request->id}/status", ['status' => 'rejected'])
+        $this->asAdmin()->patchJson("/api/requests/{$request->id}/status", ['status' => 'rejected'])
             ->assertStatus(422);
     }
 
@@ -243,7 +301,7 @@ class RequestApiTest extends TestCase
     {
         $request = Request::factory()->status(RequestStatus::Processing)->create();
 
-        $this->patchJson("/api/requests/{$request->id}/status", [
+        $this->asAdmin()->patchJson("/api/requests/{$request->id}/status", [
             'status' => 'rejected',
             'rejection_reason' => '   ',
         ])->assertStatus(422);
@@ -251,7 +309,7 @@ class RequestApiTest extends TestCase
 
     public function test_demande_inexistante_renvoie_404(): void
     {
-        $this->patchJson('/api/requests/999999/status', ['status' => 'processing'])
+        $this->asAdmin()->patchJson('/api/requests/999999/status', ['status' => 'processing'])
             ->assertStatus(404);
     }
 
@@ -259,7 +317,7 @@ class RequestApiTest extends TestCase
     {
         $request = Request::factory()->create();
 
-        $this->patchJson("/api/requests/{$request->id}/status", ['status' => 'archive'])
+        $this->asAdmin()->patchJson("/api/requests/{$request->id}/status", ['status' => 'archive'])
             ->assertStatus(422);
     }
 
@@ -272,11 +330,11 @@ class RequestApiTest extends TestCase
         $request = Request::factory()->status(RequestStatus::Processing)->create();
 
         // Premier appel : processing -> approved.
-        $this->patchJson("/api/requests/{$request->id}/status", ['status' => 'approved'])
+        $this->asAdmin()->patchJson("/api/requests/{$request->id}/status", ['status' => 'approved'])
             ->assertStatus(200);
 
         // Répétition du même appel : refusée, l'état final est figé.
-        $this->patchJson("/api/requests/{$request->id}/status", ['status' => 'approved'])
+        $this->asAdmin()->patchJson("/api/requests/{$request->id}/status", ['status' => 'approved'])
             ->assertStatus(409);
 
         $this->assertSame('approved', $request->fresh()->status->value);

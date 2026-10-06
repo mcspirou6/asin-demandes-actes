@@ -18,6 +18,7 @@ class Request extends Model
     use HasFactory;
 
     protected $fillable = [
+        'tracking_code',
         'npi',
         'act_type',
         'copies_count',

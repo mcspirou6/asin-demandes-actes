@@ -28,27 +28,32 @@ class DatabaseSeeder extends Seeder
 
         // Demandes de l'usager de démonstration : couvre les 4 statuts
         // et les 3 types d'actes, avec dates échelonnées pour vérifier
-        // le tri du plus récent au plus ancien.
+        // le tri du plus récent au plus ancien. Les codes de suivi sont
+        // fixes pour permettre une démonstration reproductible.
         $demoRequests = [
             [
+                'tracking_code' => 'ASIN-DEMO01',
                 'act_type' => ActType::BirthCertificate,
                 'copies_count' => 2,
                 'status' => RequestStatus::Submitted,
                 'days_ago' => 1,
             ],
             [
+                'tracking_code' => 'ASIN-DEMO02',
                 'act_type' => ActType::CriminalRecord,
                 'copies_count' => 1,
                 'status' => RequestStatus::Processing,
                 'days_ago' => 2,
             ],
             [
+                'tracking_code' => 'ASIN-DEMO03',
                 'act_type' => ActType::ResidenceCertificate,
                 'copies_count' => 3,
                 'status' => RequestStatus::Approved,
                 'days_ago' => 3,
             ],
             [
+                'tracking_code' => 'ASIN-DEMO04',
                 'act_type' => ActType::BirthCertificate,
                 'copies_count' => 1,
                 'status' => RequestStatus::Rejected,
@@ -56,6 +61,7 @@ class DatabaseSeeder extends Seeder
                 'days_ago' => 4,
             ],
             [
+                'tracking_code' => 'ASIN-DEMO05',
                 'act_type' => ActType::CriminalRecord,
                 'copies_count' => 5,
                 'status' => RequestStatus::Submitted,
@@ -65,6 +71,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($demoRequests as $data) {
             Request::create([
+                'tracking_code' => $data['tracking_code'],
                 'npi' => $demoNpi,
                 'act_type' => $data['act_type'],
                 'copies_count' => $data['copies_count'],

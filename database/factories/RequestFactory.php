@@ -6,6 +6,7 @@ use App\Enums\ActType;
 use App\Enums\RequestStatus;
 use App\Models\Request;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * Factory de démonstration et de test pour les demandes.
@@ -18,6 +19,8 @@ class RequestFactory extends Factory
     public function definition(): array
     {
         return [
+            // Code de suivi au format ASIN-XXXXXX (unique en base).
+            'tracking_code' => 'ASIN-' . Str::upper(Str::random(6)),
             // NPI fictif : commence par 0 volontairement pour vérifier
             // que les zéros initiaux sont préservés (stockage string).
             'npi' => '0' . $this->faker->numberBetween(100000000, 999999999),
