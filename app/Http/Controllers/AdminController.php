@@ -68,7 +68,7 @@ class AdminController extends Controller
 
     /**
      * Vue agent : TOUTES les demandes, filtrables par statut et par NPI,
-     * paginées 20 par page, de la plus récente à la plus ancienne.
+     * paginées de la plus récente à la plus ancienne.
      */
     public function index(HttpRequest $httpRequest): AnonymousResourceCollection
     {
@@ -76,9 +76,11 @@ class AdminController extends Controller
             'status' => ['nullable', new Enum(RequestStatus::class)],
             'npi' => ['nullable', 'digits:10'],
             'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'in:10,20,50'],
         ], [
             'status' => 'Le statut de filtrage est invalide.',
             'npi' => 'Le NPI recherché doit comporter exactement 10 chiffres.',
+            'per_page.in' => 'Le nombre de demandes par page doit être 10, 20 ou 50.',
         ]);
 
         $requests = Request::query()
@@ -92,7 +94,7 @@ class AdminController extends Controller
             )
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->paginate(perPage: 20)
+            ->paginate(perPage: (int) $httpRequest->input('per_page', 20))
             ->withQueryString();
 
         return RequestResource::collection($requests);

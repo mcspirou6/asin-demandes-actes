@@ -77,6 +77,26 @@ class AdminAuthTest extends TestCase
         $this->assertSame('0987654321', $response->json('data.0.npi'));
     }
 
+    public function test_taille_de_page_agent_est_configurable_et_bornee(): void
+    {
+        Request::factory()->count(55)->create();
+        $this->withSession(['admin_authenticated' => true]);
+
+        $this->getJson('/api/admin/requests?per_page=10')
+            ->assertOk()
+            ->assertJsonCount(10, 'data')
+            ->assertJsonPath('meta.total', 55);
+
+        $this->getJson('/api/admin/requests?per_page=50')
+            ->assertOk()
+            ->assertJsonCount(50, 'data')
+            ->assertJsonPath('meta.total', 55);
+
+        $this->getJson('/api/admin/requests?per_page=15')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('per_page');
+    }
+
     public function test_seed_cree_des_dossiers_reproductibles_pour_deux_usagers(): void
     {
         $this->seed(DatabaseSeeder::class);

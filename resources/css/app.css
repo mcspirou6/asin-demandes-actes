@@ -236,6 +236,22 @@ body {
     margin-bottom: 1rem;
 }
 
+.panel-head-tools {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-size-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-size-control .input {
+    min-width: 5rem;
+}
+
 /* Formulaire de recherche */
 
 .search-form {
@@ -890,5 +906,11 @@ body {
 
     .header-actions {
         margin-left: auto;
+    }
+
+    .panel-head-tools {
+        align-items: flex-end;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 }

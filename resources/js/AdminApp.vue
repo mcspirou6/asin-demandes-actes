@@ -109,7 +109,17 @@
                 <section class="panel">
                     <div class="panel-head">
                         <h2 class="panel-title">Demandes reçues</h2>
-                        <span v-if="total !== null" class="muted">{{ total }} demande{{ total > 1 ? 's' : '' }}</span>
+                        <div v-if="total !== null" class="panel-head-tools">
+                            <span class="muted">{{ total }} demande{{ total > 1 ? 's' : '' }}</span>
+                            <label class="page-size-control">
+                                <span class="label">Par page</span>
+                                <select v-model.number="perPage" class="input" aria-label="Nombre de demandes par page" @change="changePageSize">
+                                    <option :value="10">10</option>
+                                    <option :value="20">20</option>
+                                    <option :value="50">50</option>
+                                </select>
+                            </label>
+                        </div>
                     </div>
 
                     <p v-if="loading" class="muted loading-line">Chargement…</p>
@@ -234,6 +244,7 @@ const loginError = ref('');
 const requests = ref([]);
 const page = ref(1);
 const lastPage = ref(1);
+const perPage = ref(20);
 const total = ref(null);
 const loading = ref(false);
 const statusFilter = ref('');
@@ -307,6 +318,7 @@ async function loadRequests() {
     if (statusFilter.value) params.set('status', statusFilter.value);
     if (npiFilter.value) params.set('npi', npiFilter.value);
     params.set('page', String(page.value));
+    params.set('per_page', String(perPage.value));
 
     try {
         const response = await fetch(`/api/admin/requests?${params}`, { headers: { 'Accept': 'application/json' } });
@@ -364,6 +376,11 @@ function resetFilters() {
 
 function goToPage(target) {
     page.value = target;
+    loadRequests();
+}
+
+function changePageSize() {
+    page.value = 1;
     loadRequests();
 }
 

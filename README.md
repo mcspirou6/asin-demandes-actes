@@ -8,6 +8,24 @@ Application de gestion des demandes d'actes administratifs (acte de naissance, c
 
 ---
 
+## Application
+
+Le dépôt GitHub utilise la branche **`master`** :
+
+```bash
+git clone -b master https://github.com/mcspirou6/asin-demandes-actes.git
+cd asin-demandes-actes
+```
+
+| Espace | URL locale | Accès de démonstration |
+|---|---|---|
+| Usager | http://127.0.0.1:8000 | Aucun compte requis. NPI de test : `0123456789` ou `0466170591`. Le code de suivi est remis après le dépôt. |
+| Agent | http://127.0.0.1:8000/admin | Email : `agent@asin.bj` · Mot de passe : `demo1234` |
+
+Codes de suivi préchargés par le seeder : `ASIN-DEMO01` (usager 1) et `ASIN-DEMO06` (usager 2). Ces identifiants et données sont fictifs et réservés aux tests locaux.
+
+---
+
 ## Présentation
 
 Les usagers déposent en ligne des demandes d'actes administratifs. Chaque demande suit un cycle de vie strict :
@@ -47,7 +65,7 @@ Le projet fournit :
 ## Installation
 
 ```bash
-git clone <url-du-depot>
+git clone -b master https://github.com/mcspirou6/asin-demandes-actes.git
 cd asin-demandes-actes
 
 composer install
@@ -95,7 +113,7 @@ Puis ouvrir :
 > En développement, `npm run dev` fonctionne aussi : Vite relaie les appels `/api` vers le port 8000 (proxy configuré dans `vite.config.js`).
 > Après un changement frontend, reconstruire les assets avec `npm run build` et recharger la page sans cache (`Ctrl+F5`).
 
-### Identifiants de démonstration de l'agent (fictifs)
+### Identifiants de démonstration de l'agent
 
 ```text
 URL          : http://127.0.0.1:8000/admin
@@ -179,7 +197,7 @@ POST /api/admin/logout
 
 ### GET /api/admin/requests — vue agent (toutes les demandes)
 
-Réservé à l'agent connecté. Filtres facultatifs : `?status=processing`, `?npi=0123456789`. Pagination 20 par page, tri du plus récent au plus ancien.
+Réservé à l'agent connecté. Filtres facultatifs : `?status=processing`, `?npi=0123456789`. Tri du plus récent au plus ancien. La taille de page est configurable avec `per_page=10`, `per_page=20` (valeur par défaut) ou `per_page=50`.
 
 ### GET /api/admin/stats — demandes en attente
 
@@ -255,7 +273,7 @@ SQLite
 
 | Bonus | État |
 |---|---|
-| Pagination de la liste des demandes agent (20 par page) | ✅ |
+| Pagination configurable de la liste agent (10, 20 ou 50 par page) | ✅ |
 | Compteur des demandes en attente | Réservé à l'agent connecté |
 | Tests automatisés des règles et du parcours complet | ✅ |
 | Consultation publique des demandes par NPI | Non disponible ; suivi individuel par code |
@@ -277,7 +295,7 @@ Deux interfaces distinctes, même bundle : l'application Vue est montée selon l
 
 - Formulaire de connexion (email + mot de passe fictifs) ;
 - dashboard avec **notifications** : bannière de nouvelles demandes déposées, rafraîchie automatiquement toutes les 30 s ;
-- interface de tri : filtre par statut, recherche par NPI ;
+- interface de tri : filtre par statut, recherche par NPI et choix de 10, 20 ou 50 demandes par page ;
 - tableau de traitement avec date et heure de dépôt : **prise en charge** (submitted → processing), **validation**, **rejet avec saisie obligatoire du motif** ;
 - dossiers clos (validés/rejetés) non modifiables, la transition est de toute façon contrôlée côté serveur.
 
