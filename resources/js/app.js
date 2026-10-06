@@ -1,8 +1,15 @@
 import { createApp } from 'vue';
-import App from './App.vue';
 import '../css/app.css';
+import App from './App.vue';
+import AdminApp from './AdminApp.vue';
 
-// Interface de consultation des demandes (Bonus 4).
-// La logique métier critique reste dans Laravel : ce frontend
-// ne fait que consommer l'API en HTTP/JSON.
-createApp(App).mount('#app');
+// Deux interfaces distinctes montées selon l'URL :
+//  - "/"      : espace usager (dépôt, suivi par code, consultation, chatbot)
+//  - "/admin" : espace agent (connexion, dashboard, traitement)
+const root = document.getElementById('app');
+
+if (window.location.pathname.startsWith('/admin')) {
+    createApp(AdminApp).mount(root);
+} else {
+    createApp(App).mount(root);
+}

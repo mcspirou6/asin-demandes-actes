@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Request;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,6 +28,9 @@ class AdminAuthTest extends TestCase
             ->assertJsonPath('authenticated', true);
 
         $this->getJson('/api/admin/requests')->assertStatus(200);
+        $this->getJson('/api/admin/stats')
+            ->assertStatus(200)
+            ->assertJsonStructure(['submitted']);
     }
 
     public function test_connexion_avec_identifiants_invalides_refusee_422(): void
@@ -42,6 +46,7 @@ class AdminAuthTest extends TestCase
     public function test_liste_agent_sans_session_refusee_401(): void
     {
         $this->getJson('/api/admin/requests')->assertStatus(401);
+        $this->getJson('/api/admin/stats')->assertStatus(401);
     }
 
     public function test_deconnexion_revoque_l_acces(): void
@@ -70,6 +75,22 @@ class AdminAuthTest extends TestCase
             ->getJson('/api/admin/requests?npi=0987654321');
         $this->assertSame(1, $response->json('meta.total'));
         $this->assertSame('0987654321', $response->json('data.0.npi'));
+    }
+
+    public function test_seed_cree_des_dossiers_reproductibles_pour_deux_usagers(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertDatabaseHas('requests', [
+            'npi' => '0123456789',
+            'tracking_code' => 'ASIN-DEMO01',
+            'status' => 'submitted',
+        ]);
+        $this->assertDatabaseHas('requests', [
+            'npi' => '0466170591',
+            'tracking_code' => 'ASIN-DEMO06',
+            'status' => 'submitted',
+        ]);
     }
 
     protected function asAdmin(): void

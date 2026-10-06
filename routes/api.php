@@ -16,14 +16,8 @@ use Illuminate\Support\Facades\Route;
 // Déposer une demande d'acte administratif (renvoie un code de suivi).
 Route::post('/requests', [RequestController::class, 'store']);
 
-// Statistiques globales (nombre de demandes par statut).
-Route::get('/requests/stats', [RequestController::class, 'stats']);
-
 // Suivre une demande à partir de son code de suivi.
 Route::get('/requests/track/{code}', [RequestController::class, 'track']);
-
-// Lister les demandes d'un usager (tri décroissant, filtre par statut facultatif).
-Route::get('/users/{npi}/requests', [RequestController::class, 'index']);
 
 // Assistant conversationnel : réponses prédéfinies, sans IA.
 Route::get('/chatbot', [ChatbotController::class, 'answer']);
@@ -37,6 +31,7 @@ Route::post('/admin/logout', [AdminController::class, 'logout']);
 
 // Vue agent : toutes les demandes, filtrables, réservées à l'agent connecté.
 Route::get('/admin/requests', [AdminController::class, 'index'])->middleware('admin');
+Route::get('/admin/stats', [AdminController::class, 'stats'])->middleware('admin');
 
 // Faire avancer le traitement d'une demande : réservé à l'agent connecté.
 // Le cycle de vie reste contrôlé côté serveur (409 si transition interdite).

@@ -2,7 +2,7 @@
 
 Étude de cas pratique — **Développeur(se) junior(e)** — Agence des Systèmes d'Information et du Numérique (ASIN), République du Bénin.
 
-Application de gestion des demandes d'actes administratifs (acte de naissance, casier judiciaire, certificat de résidence) : API Laravel + interface de consultation Vue.js.
+Application de gestion des demandes d'actes administratifs (acte de naissance, casier judiciaire, certificat de résidence) : API Laravel, espace usager et espace agent en Vue.js.
 
 - **Candidat(e) :** Toyin Spéro Mériem AKPO
 
@@ -24,8 +24,9 @@ en cours de traitement (processing)
 Le projet fournit :
 
 1. une **API REST** (Laravel) qui gère le dépôt, la consultation et l'avancement des demandes ;
-2. une **interface de consultation** (Vue.js) affichant les demandes d'un usager ;
-3. une **suite de tests automatisés** couvrant toutes les règles de gestion.
+2. un **espace usager** (Vue.js) : dépôt d'une demande avec remise d'un **code de suivi**, puis suivi par ce code uniquement ;
+3. un **espace agent** (validateur, `/admin`) : connexion par identifiants fictifs, dashboard, notifications de nouvelles demandes, traitement (prise en charge, validation, rejet motivé) ;
+4. une **suite de tests automatisés** couvrant toutes les règles de gestion.
 
 ## Stack
 
@@ -69,7 +70,8 @@ php artisan migrate:fresh --seed
 Après cette commande, la base contient :
 
 - 5 demandes pour l'usager de démonstration **NPI `0123456789`** (au moins une par statut : `submitted`, `processing`, `approved`, `rejected`, et au moins un exemple de chaque type d'acte) ;
-- 8 demandes supplémentaires pour d'autres usagers fictifs (utiles pour les statistiques) ;
+- 1 demande reproductible pour le second usager de démonstration **NPI `0466170591`** ;
+- 7 demandes supplémentaires fictives pour alimenter l'espace agent de démonstration ;
 - un **motif** sur chaque demande rejetée.
 
 ## Démarrage
@@ -86,12 +88,46 @@ npm run build
 
 Puis ouvrir :
 
-- **Interface de consultation :** http://127.0.0.1:8000
+- **Espace usager :** http://127.0.0.1:8000 (déposer une demande et suivre avec son code)
+- **Espace agent :** http://127.0.0.1:8000/admin (connexion, dashboard, notifications, traitement)
 - **API :** http://127.0.0.1:8000/api/...
 
 > En développement, `npm run dev` fonctionne aussi : Vite relaie les appels `/api` vers le port 8000 (proxy configuré dans `vite.config.js`).
+> Après un changement frontend, reconstruire les assets avec `npm run build` et recharger la page sans cache (`Ctrl+F5`).
 
-Pour la recette, la recherche du NPI **`0123456789`** dans l'interface affiche immédiatement les demandes de démonstration.
+### Identifiants de démonstration de l'agent (fictifs)
+
+```text
+URL          : http://127.0.0.1:8000/admin
+Email        : agent@asin.bj
+Mot de passe : demo1234
+```
+
+Ces identifiants sont réservés à la démonstration locale et ne doivent pas être utilisés en production.
+
+### Usagers fictifs pour tester
+
+Il n'y a pas de compte usager à créer ou de connexion usager. Le NPI est saisi uniquement lors du dépôt ; après l'envoi, l'usager reçoit un code de suivi. Il doit conserver ce code et s'en servir pour suivre **sa demande**. L'espace usager ne montre ni le NPI, ni la liste des demandes d'autres personnes, ni les statistiques.
+
+Après `php artisan migrate:fresh --seed`, tu peux tester avec les dossiers fictifs déjà présents :
+
+| Usager de démonstration | NPI à utiliser pour déposer | Code déjà existant pour le suivi | État initial |
+|---|---|---|---|
+| Usager 1 | `0123456789` | `ASIN-DEMO01` | Déposée |
+| Usager 2 | `0466170591` | `ASIN-DEMO06` | Déposée |
+
+Tu peux aussi déposer de nouvelles demandes avec ces NPI et utiliser les codes affichés à la confirmation. Les NPI et codes du seeder sont des données fictives uniquement destinées aux essais.
+
+### Test rapide des deux espaces
+
+1. Ouvrir `http://127.0.0.1:8000` dans un onglet usager, choisir un acte, entrer le NPI de l'usager 1 ou 2, puis déposer sa demande.
+2. Noter le code de suivi donné après confirmation : l'espace usager ne permet pas de retrouver une demande avec son NPI.
+3. Ouvrir `http://127.0.0.1:8000/admin` dans un autre onglet, puis se connecter avec l'identifiant agent ci-dessus.
+4. Retrouver la demande dans le tableau agent. Cliquer sur « Actualiser » si besoin. La liste des demandes et les NPI ne sont visibles que par l'agent connecté.
+5. Cliquer sur « Prendre en charge », puis choisir de valider ou de rejeter. Un motif est obligatoire pour un rejet.
+6. Revenir dans l'onglet usager, sélectionner « Suivre ma demande », saisir le code de suivi et actualiser le statut : le changement fait par l'agent est alors visible.
+
+Les codes `ASIN-DEMO01` à `ASIN-DEMO05` appartiennent aux demandes de démonstration de l'usager 1 ; `ASIN-DEMO06` est celui de l'usager 2. Ces six codes sont fixes et reproductibles après chaque seed. Attention : `php artisan migrate:fresh --seed` efface les données actuelles et recrée la base de démonstration.
 
 ## Tests
 
@@ -99,7 +135,7 @@ Pour la recette, la recherche du NPI **`0123456789`** dans l'interface affiche i
 php artisan test
 ```
 
-37 tests couvrent : création et validation (NPI, type d'acte, copies), liste et tri, filtre par statut, cycle de vie, transitions interdites, rejet motivé, idempotence, pagination et statistiques.
+La suite couvre : création et validation (NPI, type d'acte, copies), parcours complet du dépôt au suivi après traitement par l'agent, code de suivi public sans divulgation du NPI, retrait de la liste publique par NPI et des statistiques publiques, protection de l'espace agent (401), transitions interdites, rejet motivé, idempotence, authentification et chatbot.
 
 ## API
 
@@ -118,17 +154,40 @@ Base : `http://127.0.0.1:8000/api`
 - `npi` : exactement 10 chiffres (stocké en `string` pour préserver les zéros initiaux).
 - `act_type` : `birth_certificate` | `criminal_record` | `residence_certificate`.
 - `copies_count` : entier entre 1 et 5 inclus.
-- Le statut initial `submitted` est **posé par le serveur** : le client ne peut pas l'imposer.
+- Le statut initial `submitted` et le **code de suivi** (`ASIN-XXXXXX`) sont **posés par le serveur** : le client ne peut pas les imposer.
 
-Réponse : `201 Created` avec la demande créée. Erreurs : `422 Unprocessable Entity`.
+Réponse : `201 Created` avec la demande créée et son code de suivi. Erreurs : `422 Unprocessable Entity`.
 
-### GET /users/{npi}/requests — demandes d'un usager
+### GET /requests/track/{code} — suivre une demande par code de suivi
 
-- Tri : `created_at DESC` (plus récente → plus ancienne), départage par `id DESC`.
-- Filtre facultatif : `?status=processing` (valeur invalide → `422`).
-- Pagination : 20 demandes maximum par page (`?page=1`). Réponse paginée Laravel (métadonnées dans `meta`).
+Public, utilisé par l'écran « Suivre ma demande ». Recherche insensible à la casse.
+
+- Demande trouvée → `200` avec son état courant.
+- Code inconnu → `404` : `{"message": "Aucune demande ne correspond à ce code de suivi."}`
+
+### Espace agent — authentification
+
+```text
+POST /api/admin/login   { "email": "agent@asin.bj", "password": "demo1234" }
+GET  /api/admin/me      → { "authenticated": true|false }
+POST /api/admin/logout
+```
+
+- Identifiants fictifs (configurables via `.env` : `ADMIN_EMAIL`, `ADMIN_PASSWORD`), voir section « Démarrage ».
+- Identifiants incorrects → `422` : `{"message": "Identifiants incorrects."}`
+- Une fois connecté, une session marque l'agent ; le middleware `admin` protège les endpoints de traitement (`401` sinon).
+
+### GET /api/admin/requests — vue agent (toutes les demandes)
+
+Réservé à l'agent connecté. Filtres facultatifs : `?status=processing`, `?npi=0123456789`. Pagination 20 par page, tri du plus récent au plus ancien.
+
+### GET /api/admin/stats — demandes en attente
+
+Réservé à l'agent connecté ; renvoie le nombre de demandes déposées, jamais affiché dans l'espace usager.
 
 ### PATCH /requests/{id}/status — faire avancer le traitement
+
+**Réservé à l'agent connecté** (`401` sans session). Le corps attendu reste :
 
 ```json
 { "status": "processing" }
@@ -147,17 +206,6 @@ Réponse : `201 Created` avec la demande créée. Erreurs : `422 Unprocessable E
   `{"message": "La transition de submitted vers approved est interdite."}`
 - Rejet sans motif → `422 Unprocessable Entity` (`"Un rejet doit obligatoirement être motivé."`).
 - Demande inexistante → `404 Not Found`.
-
-### GET /requests/stats — statistiques (Bonus 2)
-
-```json
-{
-    "submitted": 10,
-    "processing": 5,
-    "approved": 20,
-    "rejected": 3
-}
-```
 
 ### Cycle de vie des statuts
 
@@ -207,26 +255,37 @@ SQLite
 
 | Bonus | État |
 |---|---|
-| 1 — Pagination (20 max par page) | ✅ |
-| 2 — Nombre de demandes par statut (`GET /api/requests/stats` + affichage dans l'interface) | ✅ |
-| 3 — Tests automatisés des règles de gestion (37 tests) | ✅ |
-| 4 — Écran de consultation des demandes d'un usager (recherche par NPI, filtre, pagination) | ✅ |
+| Pagination de la liste des demandes agent (20 par page) | ✅ |
+| Compteur des demandes en attente | Réservé à l'agent connecté |
+| Tests automatisés des règles et du parcours complet | ✅ |
+| Consultation publique des demandes par NPI | Non disponible ; suivi individuel par code |
 
 ## Interface
 
-L'interface (http://127.0.0.1:8000) permet de :
+Deux interfaces distinctes, même bundle : l'application Vue est montée selon l'URL (`/` usager, `/admin` agent).
 
-- rechercher les demandes d'un usager par **NPI** ;
-- **filtrer par statut** ;
-- consulter type d'acte, nombre de copies, statut, date de dépôt, motif de rejet ;
-- naviguer entre les pages ;
-- interroger l'**assistant conversationnel** (voir ci-dessous).
+### Espace usager (`/`)
+
+- Accueil « **Bienvenue, cher usager** » + « Que voulez-vous faire ? » ;
+- cartes de dépôt des trois types d'actes (formulaire NPI + nombre de copies) ;
+- confirmation avec **code de suivi** mis en évidence et consigne de conservation ;
+- écran « **Suivre ma demande** » : saisie du code de suivi → état courant de cette seule demande ;
+- actualisation du statut après traitement par l'agent, sans afficher le NPI ni les statistiques globales ;
+- lien « **Vous êtes agent ?** » vers l'espace agent.
+
+### Espace agent (`/admin`)
+
+- Formulaire de connexion (email + mot de passe fictifs) ;
+- dashboard avec **notifications** : bannière de nouvelles demandes déposées, rafraîchie automatiquement toutes les 30 s ;
+- interface de tri : filtre par statut, recherche par NPI ;
+- tableau de traitement avec date et heure de dépôt : **prise en charge** (submitted → processing), **validation**, **rejet avec saisie obligatoire du motif** ;
+- dossiers clos (validés/rejetés) non modifiables, la transition est de toute façon contrôlée côté serveur.
 
 Le style suit la référence visuelle **ANIP** : en-tête bleu nuit avec barre tricolore, fond bleu-gris clair, cartes blanches à bord fin avec pastilles d'icônes, accents orange pour les actions principales. Icônes SVG uniquement, aucun emoji.
 
 ## Assistant conversationnel (fonctionnalité additionnelle)
 
-Une bulle de chat orange (en bas à droite, comme sur le site ANIP) ouvre un mini assistant qui répond aux questions sur le traitement des demandes.
+L'endpoint optionnel `/api/chatbot` répond à des questions prédéfinies sur le traitement des demandes ; il n'est pas affiché dans l'espace usager.
 
 **Principe : sans intelligence artificielle.** Les réponses sont prédéfinies à l'avance dans `config/chatbot.php` (mots-clés → réponse). L'endpoint normalise la question (minuscules, sans accents), cherche la meilleure correspondance par mots-clés et renvoie la réponse préparée ; sans correspondance, une réponse de repli est renvoyée. Rien n'est généré dynamiquement.
 
@@ -249,8 +308,11 @@ app/
 │   └── InvalidTransitionException.php
 ├── Http/
 │   ├── Controllers/
+│   │   ├── AdminController.php
 │   │   ├── ChatbotController.php
 │   │   └── RequestController.php
+│   ├── Middleware/EnsureAdminAuthenticated.php
+│   ├── Requests/
 │   ├── Requests/
 │   │   ├── StoreRequestRequest.php
 │   │   └── UpdateRequestStatusRequest.php
@@ -270,10 +332,11 @@ tests/Feature/RequestApiTest.php
 
 ## Limites connues (et pourquoi)
 
+- **Authentification agent simplifiée** : un unique agent fictif (session), sans table users ni hachage de mot de passe — suffisant pour la démonstration, à remplacer par une authentification complète en production.
+- **CSRF non appliqué sur l'API** : le groupe `api` n'impose pas le token CSRF (démonstration mono-usage) ; la session agent reste protégée par le middleware dédié.
 - **Idempotency-Key non implémentée** pour la création : la répétition d'une création crée deux demandes. Implémentation possible en une table `idempotency_keys` + middleware, écartée pour rester dans le temps imparti. Les transitions, elles, sont déjà protégées.
-- **Pas d'authentification** : non demandée par l'énoncé ; l'API est ouverte (usage de démonstration).
-- **Pas de création de demandes depuis l'interface** : l'énoncé demande un écran de *consultation* (Bonus 4) ; le dépôt se fait via l'API.
-- **Recherche par NPI non indexée côté interface** : l'index `npi + created_at` est en base ; aucune recherche floue (non demandée).
+- **Pas d'authentification usager** : le dépôt est public (comme l'énoncé le décrit) ; le code de suivi sert de justificatif côté usager.
+- **Consultation publique par NPI** : volontairement retirée ; chaque usager suit sa demande grâce à son code.
 
 ## Sécurité
 

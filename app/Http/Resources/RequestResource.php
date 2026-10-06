@@ -13,7 +13,7 @@ class RequestResource extends JsonResource
 {
     public function toArray(HttpRequest $request): array
     {
-        return [
+        $data = [
             'id' => $this->id,
             'tracking_code' => $this->tracking_code,
             'npi' => $this->npi,
@@ -25,5 +25,11 @@ class RequestResource extends JsonResource
             'created_at' => $this->created_at->toISOString(),
             'updated_at' => $this->updated_at->toISOString(),
         ];
+
+        if (! $request->session()->get('admin_authenticated')) {
+            unset($data['npi']);
+        }
+
+        return $data;
     }
 }

@@ -38,7 +38,6 @@ class RequestApiTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-            ->assertJsonPath('data.npi', '0123456789')
             ->assertJsonPath('data.status', 'submitted')
             ->assertJsonPath('data.copies_count', 2);
 
@@ -132,65 +131,6 @@ class RequestApiTest extends TestCase
     }
 
     // ------------------------------------------------------------------
-    // Liste
-    // ------------------------------------------------------------------
-
-    public function test_liste_triee_du_plus_recent_au_plus_ancien(): void
-    {
-        $npi = '1234567890';
-
-        // Les deux demandes ont exactement le même created_at : le tri
-        // secondaire par id DESC garantit l'ordre attendu.
-        $oldest = Request::factory()->npi($npi)->create(['created_at' => now()]);
-        $newest = Request::factory()->npi($npi)->create(['created_at' => now()]);
-
-        $response = $this->getJson("/api/users/{$npi}/requests");
-
-        $response->assertStatus(200);
-        $ids = array_column($response->json('data'), 'id');
-        $this->assertSame([$newest->id, $oldest->id], $ids);
-    }
-
-    public function test_liste_n_renvoie_pas_les_demandes_des_autres_npi(): void
-    {
-        $npi = '1234567890';
-        Request::factory()->npi($npi)->create();
-        Request::factory()->npi('0987654321')->create();
-
-        $response = $this->getJson("/api/users/{$npi}/requests");
-        $this->assertCount(1, $response->json('data'));
-        $this->assertSame($npi, $response->json('data.0.npi'));
-    }
-
-    public function test_npi_sans_demande_renvoie_liste_vide(): void
-    {
-        $this->getJson('/api/users/9999999999/requests')
-            ->assertStatus(200)
-            ->assertJsonCount(0, 'data');
-    }
-
-    public function test_filtre_par_statut(): void
-    {
-        $npi = '1234567890';
-        Request::factory()->npi($npi)->status(RequestStatus::Submitted)->create();
-        $processing = Request::factory()->npi($npi)->status(RequestStatus::Processing)->create();
-
-        $response = $this->getJson("/api/users/{$npi}/requests?status=processing");
-
-        $response->assertStatus(200);
-        $this->assertCount(1, $response->json('data'));
-        $this->assertSame($processing->id, $response->json('data.0.id'));
-    }
-
-    public function test_filtre_statut_invalide_refuse_422(): void
-    {
-        Request::factory()->create();
-
-        $this->getJson('/api/users/1234567890/requests?status=annule')
-            ->assertStatus(422);
-    }
-
-    // ------------------------------------------------------------------
     // Suivi par code de suivi (espace usager)
     // ------------------------------------------------------------------
 
@@ -201,13 +141,48 @@ class RequestApiTest extends TestCase
         $this->getJson("/api/requests/track/{$request->tracking_code}")
             ->assertStatus(200)
             ->assertJsonPath('data.id', $request->id)
-            ->assertJsonPath('data.tracking_code', $request->tracking_code);
+            ->assertJsonPath('data.tracking_code', $request->tracking_code)
+            ->assertJsonMissingPath('data.npi');
     }
 
     public function test_suivi_code_inconnu_renvoie_404(): void
     {
         $this->getJson('/api/requests/track/ASIN-ZZZZZZ')
             ->assertStatus(404);
+    }
+
+    public function test_depot_traitement_agent_et_suivi_usager_sont_synchronises(): void
+    {
+        $created = $this->postJson('/api/requests', [
+            'npi' => '0123456789',
+            'act_type' => 'birth_certificate',
+            'copies_count' => 2,
+        ])->assertCreated()
+            ->assertJsonPath('data.status', 'submitted')
+            ->assertJsonMissingPath('data.npi');
+
+        $code = $created->json('data.tracking_code');
+        $id = $created->json('data.id');
+
+        $this->postJson('/api/admin/login', [
+            'email' => 'agent@asin.bj',
+            'password' => 'demo1234',
+        ])->assertOk();
+
+        $this->getJson('/api/admin/requests')
+            ->assertOk()
+            ->assertJsonFragment(['tracking_code' => $code]);
+
+        $this->patchJson("/api/requests/{$id}/status", ['status' => 'processing'])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'processing');
+
+        $this->postJson('/api/admin/logout')->assertOk();
+
+        $this->getJson("/api/requests/track/{$code}")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'processing')
+            ->assertJsonMissingPath('data.npi');
     }
 
     // ------------------------------------------------------------------
@@ -357,41 +332,9 @@ class RequestApiTest extends TestCase
         $this->assertDatabaseCount('requests', 2);
     }
 
-    // ------------------------------------------------------------------
-    // Bonus : pagination
-    // ------------------------------------------------------------------
-
-    public function test_pagination_max_20_par_page(): void
+    public function test_liste_par_npi_et_statistiques_ne_sont_plus_accessibles_publiquement(): void
     {
-        $npi = '1234567890';
-        Request::factory()->count(25)->npi($npi)->create();
-
-        $response = $this->getJson("/api/users/{$npi}/requests?page=1");
-
-        $response->assertStatus(200);
-        $this->assertCount(20, $response->json('data'));
-        $this->assertSame(25, $response->json('meta.total'));
-        $this->assertSame(2, $response->json('meta.last_page'));
-    }
-
-    // ------------------------------------------------------------------
-    // Bonus : statistiques
-    // ------------------------------------------------------------------
-
-    public function test_statistiques_par_statut(): void
-    {
-        Request::factory()->count(2)->status(RequestStatus::Submitted)->create();
-        Request::factory()->status(RequestStatus::Processing)->create();
-        Request::factory()->status(RequestStatus::Approved)->create();
-        Request::factory()->rejected('Motif test')->create();
-
-        $this->getJson('/api/requests/stats')
-            ->assertStatus(200)
-            ->assertJson([
-                'submitted' => 2,
-                'processing' => 1,
-                'approved' => 1,
-                'rejected' => 1,
-            ]);
+        $this->getJson('/api/users/0123456789/requests')->assertNotFound();
+        $this->getJson('/api/requests/stats')->assertNotFound();
     }
 }

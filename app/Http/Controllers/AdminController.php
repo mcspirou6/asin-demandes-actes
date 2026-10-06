@@ -42,6 +42,7 @@ class AdminController extends Controller
             return response()->json(['message' => 'Identifiants incorrects.'], 422);
         }
 
+        $httpRequest->session()->regenerate();
         $httpRequest->session()->put('admin_authenticated', true);
 
         return response()->json(['message' => 'Connexion réussie.']);
@@ -95,5 +96,14 @@ class AdminController extends Controller
             ->withQueryString();
 
         return RequestResource::collection($requests);
+    }
+
+    public function stats(): JsonResponse
+    {
+        return response()->json([
+            'submitted' => Request::query()
+                ->where('status', RequestStatus::Submitted)
+                ->count(),
+        ]);
     }
 }

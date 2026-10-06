@@ -12,8 +12,7 @@ use Illuminate\Database\Seeder;
  *
  * Toutes les données sont FICTIVES (NPI générés pour la démonstration).
  * Après `php artisan migrate:fresh --seed`, la base contient :
- *  - plusieurs demandes pour un même usager de démonstration (NPI visible
- *    dans le README et l'interface) ;
+ *  - des demandes avec des codes fixes pour deux usagers de démonstration ;
  *  - au moins une demande par statut (submitted, processing, approved,
  *    rejected) ;
  *  - au moins un exemple de chaque type d'acte ;
@@ -81,10 +80,19 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        Request::create([
+            'tracking_code' => 'ASIN-DEMO06',
+            'npi' => '0466170591',
+            'act_type' => ActType::ResidenceCertificate,
+            'copies_count' => 1,
+            'status' => RequestStatus::Submitted,
+            'created_at' => now(),
+        ]);
+
         // Quelques demandes pour d'autres usagers fictifs, afin d'avoir
-        // des statistiques variées et de vérifier l'isolation par NPI.
+        // davantage de dossiers dans l'espace agent de démonstration.
         Request::factory()
-            ->count(8)
+            ->count(7)
             ->sequence(
                 ['status' => RequestStatus::Submitted],
                 ['status' => RequestStatus::Submitted],
