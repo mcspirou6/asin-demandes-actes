@@ -1,11 +1,400 @@
-@import 'tailwindcss';
+/*
+ * Style institutionnel sobre : palette institutionnelle (bleu nuit,
+ * fonds clairs, accents discrets), typographie hiérarchisée,
+ * cartes et tableaux denses à espacement régulier. Aucun gradient,
+ * aucune image raster, icônes SVG uniquement.
+ */
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+:root {
+    --color-primary: #123a6d;
+    --color-primary-dark: #0c2749;
+    --color-accent: #1e6f50;
+    --color-danger: #a3341f;
+    --color-warning: #8a6d1a;
+    --color-neutral: #5a6472;
+    --color-bg: #f4f6f9;
+    --color-surface: #ffffff;
+    --color-border: #dde3ec;
+    --color-text: #1f2937;
+    --color-muted: #6b7280;
+    --radius: 6px;
+    --shadow: 0 1px 2px rgb(16 42 78 / 0.08);
+    --font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font);
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.5;
+}
+
+.mono {
+    font-family: "Cascadia Mono", Consolas, monospace;
+}
+
+.muted {
+    color: var(--color-muted);
+    font-size: 0.875rem;
+}
+
+.icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    flex: none;
+}
+
+.icon-sm {
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
+/* En-tête */
+
+.header {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+.header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 1.5rem;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.brand-mark {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: #ffffff;
+}
+
+.brand-top {
+    margin: 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+.brand-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.brand-sub {
+    margin: 0.5rem 0 0 3.25rem;
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+/* Structure générale */
+
+.main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.footer {
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+    padding: 1rem;
+    text-align: center;
+    color: var(--color-muted);
+    font-size: 0.8rem;
+}
+
+/* Statistiques */
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+}
+
+.stat-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.stat-value {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+}
+
+/* Panneaux (cartes) */
+
+.panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.25rem;
+}
+
+.panel-title {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-primary-dark);
+}
+
+.panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+.panel-head .panel-title {
+    margin-bottom: 1rem;
+}
+
+/* Formulaire de recherche */
+
+.search-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.field-grow {
+    flex: 1;
+}
+
+.label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-neutral);
+}
+
+.input {
+    min-width: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0.55rem 0.75rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+
+.input:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+    border-color: var(--color-primary);
+}
+
+#npi {
+    width: 15rem;
+    font-family: "Cascadia Mono", Consolas, monospace;
+}
+
+/* Boutons */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    padding: 0.55rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    background: transparent;
+    color: var(--color-text);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+}
+
+.btn-ghost {
+    border-color: var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-primary-dark);
+}
+
+.btn-ghost:hover:not(:disabled) {
+    border-color: var(--color-primary);
+}
+
+/* Tableau des demandes */
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.table th {
+    text-align: left;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-neutral);
+    border-bottom: 2px solid var(--color-border);
+    padding: 0.5rem 0.75rem;
+}
+
+.table td {
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.65rem 0.75rem;
+    vertical-align: top;
+}
+
+.table tbody tr:hover {
+    background: var(--color-bg);
+}
+
+.act-name {
+    font-weight: 600;
+}
+
+.reject-reason {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.8rem;
+    color: var(--color-danger);
+}
+
+.reject-reason .icon {
+    vertical-align: -0.12em;
+    margin-right: 0.2rem;
+}
+
+/* Badges de statut */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.badge-submitted {
+    color: var(--color-primary);
+    background: #e8eef7;
+}
+
+.badge-processing {
+    color: var(--color-warning);
+    background: #f6efd8;
+}
+
+.badge-approved {
+    color: var(--color-accent);
+    background: #e4f1ea;
+}
+
+.badge-rejected {
+    color: var(--color-danger);
+    background: #f9e6e1;
+}
+
+.dot-submitted { color: var(--color-primary); }
+.dot-processing { color: var(--color-warning); }
+.dot-approved { color: var(--color-accent); }
+.dot-rejected { color: var(--color-danger); }
+
+/* Pagination */
+
+.pagination {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+/* Alertes */
+
+.alert {
+    margin: 1rem 0 0;
+    padding: 0.65rem 0.9rem;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+}
+
+.alert-error {
+    background: #f9e6e1;
+    border: 1px solid #ecc7bc;
+    color: var(--color-danger);
+}
+
+/* Responsive */
+
+@media (max-width: 720px) {
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .search-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #npi {
+        width: 100%;
+    }
 }
