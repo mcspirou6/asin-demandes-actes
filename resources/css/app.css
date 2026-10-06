@@ -1,24 +1,28 @@
 /*
- * Style institutionnel sobre : palette institutionnelle (bleu nuit,
- * fonds clairs, accents discrets), typographie hiérarchisée,
- * cartes et tableaux denses à espacement régulier. Aucun gradient,
- * aucune image raster, icônes SVG uniquement.
+ * Style institutionnel aligné sur la référence visuelle ANIP :
+ * en-tête bleu nuit, fond bleu-gris très clair, cartes blanches à
+ * bord fin, icônes dans des pastilles bleu pâle, accents orange
+ * (boutons, bulle de chat). Aucun gradient, aucune image raster,
+ * icônes SVG uniquement.
  */
 
 :root {
-    --color-primary: #123a6d;
-    --color-primary-dark: #0c2749;
-    --color-accent: #1e6f50;
+    --color-primary: #0b2d5e;
+    --color-primary-dark: #071f42;
+    --color-accent: #f2a33c;
+    --color-accent-dark: #d98a28;
+    --color-success: #1e6f50;
     --color-danger: #a3341f;
     --color-warning: #8a6d1a;
     --color-neutral: #5a6472;
-    --color-bg: #f4f6f9;
+    --color-bg: #f2f6fa;
     --color-surface: #ffffff;
-    --color-border: #dde3ec;
+    --color-border: #e3e9f2;
+    --color-icon-circle: #e4eef9;
     --color-text: #1f2937;
     --color-muted: #6b7280;
-    --radius: 6px;
-    --shadow: 0 1px 2px rgb(16 42 78 / 0.08);
+    --radius: 8px;
+    --shadow: 0 1px 3px rgb(11 45 94 / 0.07);
     --font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -79,6 +83,22 @@ body {
     color: #ffffff;
 }
 
+/* Barre tricolore sous le titre, rappel du logo institutionnel. */
+.brand-stripe {
+    margin-top: 0.25rem;
+    width: 7.5rem;
+    height: 3px;
+    display: flex;
+}
+
+.brand-stripe span {
+    flex: 1;
+}
+
+.brand-stripe .green { background: #1e7a45; }
+.brand-stripe .yellow { background: #f2c94c; }
+.brand-stripe .red { background: #d64545; }
+
 .brand-top {
     margin: 0;
     font-size: 0.75rem;
@@ -132,10 +152,34 @@ body {
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Pastille bleu pâle contenant l'icône SVG, comme les cartes ANIP. */
+.stat-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    flex: none;
+    border-radius: 50%;
+    background: var(--color-icon-circle);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-icon svg {
+    width: 1.2rem;
+    height: 1.2rem;
+}
+
+.stat-text {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.1rem;
 }
 
 .stat-value {
@@ -250,12 +294,12 @@ body {
 }
 
 .btn-primary {
-    background: var(--color-primary);
+    background: var(--color-accent);
     color: #ffffff;
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: var(--color-primary-dark);
+    background: var(--color-accent-dark);
 }
 
 .btn-ghost {
@@ -380,6 +424,164 @@ body {
     background: #f9e6e1;
     border: 1px solid #ecc7bc;
     color: var(--color-danger);
+}
+
+/* Assistant conversationnel (bulle orange, cf. référence ANIP) */
+
+.chatbot {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.chat-bubble {
+    width: 3.5rem;
+    height: 3.5rem;
+    border: none;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgb(11 45 94 / 0.25);
+}
+
+.chat-bubble svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.chat-bubble:hover {
+    background: var(--color-accent-dark);
+}
+
+.chat-panel {
+    width: min(22rem, calc(100vw - 2.5rem));
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgb(11 45 94 / 0.18);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-head {
+    background: var(--color-primary);
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chat-close {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 0.2rem;
+    display: flex;
+}
+
+.chat-messages {
+    padding: 1rem;
+    max-height: 18rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    background: var(--color-bg);
+}
+
+.chat-message {
+    max-width: 85%;
+    padding: 0.55rem 0.8rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+
+.chat-message-bot {
+    align-self: flex-start;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+}
+
+.chat-message-user {
+    align-self: flex-end;
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+.chat-typing {
+    align-self: flex-start;
+    margin: 0;
+}
+
+.chat-form {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+}
+
+.chat-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--color-text);
+}
+
+.chat-input:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+}
+
+.chat-send {
+    width: 2.4rem;
+    height: 2.4rem;
+    flex: none;
+    border: none;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-send:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chat-send svg {
+    width: 1.1rem;
+    height: 1.1rem;
 }
 
 /* Responsive */

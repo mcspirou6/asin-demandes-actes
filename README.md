@@ -219,9 +219,24 @@ L'interface (http://127.0.0.1:8000) permet de :
 - rechercher les demandes d'un usager par **NPI** ;
 - **filtrer par statut** ;
 - consulter type d'acte, nombre de copies, statut, date de dépôt, motif de rejet ;
-- naviguer entre les pages.
+- naviguer entre les pages ;
+- interroger l'**assistant conversationnel** (voir ci-dessous).
 
-Elle respecte un style institutionnel sobre (palette bleu institutionnel, cartes et tableaux denses, icônes SVG uniquement, aucun emoji).
+Le style suit la référence visuelle **ANIP** : en-tête bleu nuit avec barre tricolore, fond bleu-gris clair, cartes blanches à bord fin avec pastilles d'icônes, accents orange pour les actions principales. Icônes SVG uniquement, aucun emoji.
+
+## Assistant conversationnel (fonctionnalité additionnelle)
+
+Une bulle de chat orange (en bas à droite, comme sur le site ANIP) ouvre un mini assistant qui répond aux questions sur le traitement des demandes.
+
+**Principe : sans intelligence artificielle.** Les réponses sont prédéfinies à l'avance dans `config/chatbot.php` (mots-clés → réponse). L'endpoint normalise la question (minuscules, sans accents), cherche la meilleure correspondance par mots-clés et renvoie la réponse préparée ; sans correspondance, une réponse de repli est renvoyée. Rien n'est généré dynamiquement.
+
+```text
+GET /api/chatbot?q=comment+suivre+ma+demande
+
+{"matched": true, "answer": "Votre demande suit ce parcours : déposée, ..."}
+```
+
+Thèmes couverts : suivi du parcours, statuts, NPI, nombre de copies, types d'actes, rejet et motif, modification d'une demande finalisée, délais, frais. Testé dans `tests/Feature/ChatbotTest.php`.
 
 ## Structure du projet
 
@@ -233,7 +248,9 @@ app/
 ├── Exceptions/
 │   └── InvalidTransitionException.php
 ├── Http/
-│   ├── Controllers/RequestController.php
+│   ├── Controllers/
+│   │   ├── ChatbotController.php
+│   │   └── RequestController.php
 │   ├── Requests/
 │   │   ├── StoreRequestRequest.php
 │   │   └── UpdateRequestStatusRequest.php

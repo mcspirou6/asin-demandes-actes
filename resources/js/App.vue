@@ -11,6 +11,11 @@
                     <div>
                         <p class="brand-top">République du Bénin</p>
                         <h1 class="brand-title">ASIN — Suivi des demandes d'actes</h1>
+                        <div class="brand-stripe" aria-hidden="true">
+                            <span class="green"></span>
+                            <span class="yellow"></span>
+                            <span class="red"></span>
+                        </div>
                     </div>
                 </div>
                 <p class="brand-sub">Agence des Systèmes d'Information et du Numérique</p>
@@ -21,8 +26,15 @@
             <!-- Statistiques : nombre de demandes par statut (Bonus 2) -->
             <section class="stats" aria-label="Statistiques par statut">
                 <div v-for="s in statusCards" :key="s.value" class="stat-card">
-                    <span class="stat-value">{{ stats[s.value] ?? 0 }}</span>
-                    <span class="stat-label" :class="'dot-' + s.value">{{ s.label }}</span>
+                    <span class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path :d="s.icon" />
+                        </svg>
+                    </span>
+                    <span class="stat-text">
+                        <span class="stat-value">{{ stats[s.value] ?? 0 }}</span>
+                        <span class="stat-label" :class="'dot-' + s.value">{{ s.label }}</span>
+                    </span>
                 </div>
             </section>
 
@@ -134,6 +146,8 @@
             </section>
         </main>
 
+        <Chatbot />
+
         <footer class="footer">
             <p>Suivi des demandes d'actes administratifs — démonstration technique</p>
         </footer>
@@ -142,6 +156,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import Chatbot from './components/Chatbot.vue';
 
 // Libellés français des statuts : source unique pour le filtre et les badges.
 const statuses = [
@@ -151,7 +166,13 @@ const statuses = [
     { value: 'rejected', label: 'Rejetée' },
 ];
 
-const statusCards = statuses;
+// Icônes SVG (chemins uniques) affichées dans les cartes de statistiques.
+const statusCards = [
+    { value: 'submitted', label: 'Déposée', icon: 'M7 3h7l4 4v14H7z M14 3v4h4' },
+    { value: 'processing', label: 'En cours de traitement', icon: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 3' },
+    { value: 'approved', label: 'Validée', icon: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M8.5 12.5l2.5 2.5 4.5-5' },
+    { value: 'rejected', label: 'Rejetée', icon: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M9 9l6 6 M15 9l-6 6' },
+];
 
 const stats = ref({});
 const npi = ref('');
