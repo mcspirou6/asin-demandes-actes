@@ -67,11 +67,14 @@
         <footer class="footer">
             <p>ASIN — Suivi des demandes d'actes administratifs</p>
         </footer>
+
+        <Chatbot />
     </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
+import Chatbot from './components/Chatbot.vue';
 import DepositForm from './components/DepositForm.vue';
 import TrackForm from './components/TrackForm.vue';
 
